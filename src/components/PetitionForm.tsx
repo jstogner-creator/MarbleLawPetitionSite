@@ -3,56 +3,10 @@ import { SectionId, PetitionData } from '../types';
 import { CheckCircle, Shield, MapPin, Gavel, Loader2, AlertCircle } from 'lucide-react';
 
 // ==========================================
-// GOOGLE SHEETS SETUP INSTRUCTIONS
+// GOOGLE SHEETS CONFIGURATION
 // ==========================================
-// 1. Create a Google Sheet
-// 2. Go to Extensions > Apps Script
-// 3. Delete any code there and paste this:
-/*
-function doPost(e) {
-  var lock = LockService.getScriptLock();
-  lock.tryLock(10000);
-  
-  try {
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-    var data = JSON.parse(e.postData.contents);
-    
-    // Add headers if sheet is empty
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp", "Full Name", "Email", "Phone", "State", "Case Type", "Amount Paid", "Experience", "Consent Given"]);
-    }
-    
-    sheet.appendRow([
-      new Date(), 
-      data.fullName, 
-      data.email, 
-      data.phone, 
-      data.state, 
-      data.caseType, 
-      data.amountPaid, 
-      data.experience,
-      data.consent
-    ]);
-    
-    return ContentService.createTextOutput(JSON.stringify({ "result": "success" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (e) {
-    return ContentService.createTextOutput(JSON.stringify({ "result": "error", "error": e }))
-      .setMimeType(ContentService.MimeType.JSON);
-  } finally {
-    lock.releaseLock();
-  }
-}
-*/
-// 4. Click 'Deploy' > 'New deployment'
-// 5. Select type 'Web app'
-// 6. Description: 'Petition Form'
-// 7. Execute as: 'Me'
-// 8. Who has access: 'Anyone' (IMPORTANT)
-// 9. Deploy and COPY the Web App URL
-// 10. Paste the URL below in GOOGLE_SCRIPT_URL:
-
-const GOOGLE_SCRIPT_URL = ""; // PASTE YOUR WEB APP URL HERE
+// Using Deployment ID: AKfycbwfBD7CM-QEz1Y3fbo9D_PN1ZYsCpbpPWLQ_M2Xd2djE55P44ZontsYj43BP9VOW3U
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfBD7CM-QEz1Y3fbo9D_PN1ZYsCpbpPWLQ_M2Xd2djE55P44ZontsYj43BP9VOW3U/exec";
 
 interface FormErrors {
   fullName?: string;
@@ -151,13 +105,15 @@ export const PetitionForm: React.FC<PetitionFormProps> = ({ onDataChange }) => {
 
     try {
       if (GOOGLE_SCRIPT_URL) {
-        // Send to Google Sheets using 'no-cors' mode (standard for this integration)
+        // Send to Google Sheets using 'no-cors' mode
+        // Note: We use "text/plain" content type to avoid CORS preflight (OPTIONS) requests
+        // which Google Apps Script does not handle.
         await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
           body: JSON.stringify(formData),
           mode: "no-cors", 
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "text/plain",
           },
         });
         
@@ -165,8 +121,7 @@ export const PetitionForm: React.FC<PetitionFormProps> = ({ onDataChange }) => {
         await new Promise(resolve => setTimeout(resolve, 800));
         setStatus('success');
       } else {
-        // Fallback simulation if no URL configured
-        console.warn("Google Script URL not set. Simulating submission.");
+        console.warn("Google Script URL not set.");
         await new Promise(resolve => setTimeout(resolve, 1500));
         setStatus('success');
       }
