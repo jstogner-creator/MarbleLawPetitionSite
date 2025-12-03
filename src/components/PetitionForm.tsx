@@ -105,19 +105,28 @@ export const PetitionForm: React.FC<PetitionFormProps> = ({ onDataChange }) => {
 
     try {
       if (GOOGLE_SCRIPT_URL) {
-        // Send to Google Sheets using 'no-cors' mode
-        // Note: We use "text/plain" content type to avoid CORS preflight (OPTIONS) requests
-        // which Google Apps Script does not handle.
+        // Convert data to URLSearchParams (Standard Form Data)
+        // This is much more reliable for Google Apps Script than JSON
+        const payload = new URLSearchParams();
+        payload.append('fullName', formData.fullName);
+        payload.append('email', formData.email);
+        payload.append('phone', formData.phone);
+        payload.append('state', formData.state);
+        payload.append('caseType', formData.caseType);
+        payload.append('amountPaid', formData.amountPaid);
+        payload.append('experience', formData.experience);
+        payload.append('consent', String(formData.consent));
+
         await fetch(GOOGLE_SCRIPT_URL, {
           method: "POST",
-          body: JSON.stringify(formData),
-          mode: "no-cors", 
+          body: payload,
+          mode: "no-cors",
           headers: {
-            "Content-Type": "text/plain",
+            "Content-Type": "application/x-www-form-urlencoded",
           },
         });
         
-        // Since no-cors doesn't return status, we assume success if no network error thrown
+        // Since no-cors doesn't return status, we assume success
         await new Promise(resolve => setTimeout(resolve, 800));
         setStatus('success');
       } else {
